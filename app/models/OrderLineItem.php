@@ -125,7 +125,7 @@ class OrderLineItem {
     public static function delete($id) {
         $dbController = new DBController();
 
-        $sql = "DELETE FROM order_line_items WHERE id = $id";
+        $sql = "UPDATE order_line_items SET destroyed_at = NOW() WHERE id = $id;";
         if ($dbController->executeQuery($sql)) {
             return true;
         } else {

@@ -1,15 +1,8 @@
 <?php
 class CartController {
     public function index() {
-        // die(json_encode([
-        //     'req' => "Request",
-        //     'cols' => $_GET["columns"]
-        // ]));
+        returnResponse(200, "success", "Response data");
         return Cart::list();
-    }
-
-    public function show($id) {
-        return Cart::view($id);
     }
 
     public function store($data) {
@@ -24,9 +17,5 @@ class CartController {
         else {
             return Cart::create($data["cart"]);
         }
-    }
-
-    public function destroy($id) {
-        return Cart::delete($id);
     }
 }

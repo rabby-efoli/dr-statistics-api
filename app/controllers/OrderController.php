@@ -2,19 +2,63 @@
 
 class OrderController {
     public function index() {
-        die(json_encode([
-            'req' => "Request",
-            'cols' => $_GET["columns"]
-        ]));
+        returnResponse(200, "success", "Response data");
         return Order::list();
     }
 
-    public function show($id) {
-        return Order::view($id);
+    public function dashboardData($request) {
+        $params = $request["params"];
+        $dataField = $params["dataField"];
+        $dataDurationStart = 0;
+        $dataDurationEnd = 1;
+        if($params["dataDuration"] == "15days") {
+            $dataDurationStart = 15;
+            $dataDurationEnd = 30;
+        }
+        else if($params["dataDuration"] == "30days") {
+            $dataDurationStart = 30;
+            $dataDurationEnd = 60;
+        }
+
+        $data = [];
+        if($dataField == "totalOrders" || $dataField == "all") {
+            $totalOrdersResult = Order::getTotalOrders($dataDurationStart, $dataDurationEnd);
+            $data["totalOrders"] = round($totalOrdersResult[0]);
+            if($totalOrdersResult[1] == 0) {
+                $data["totalOrderDifference"] = $totalOrdersResult[0] > 0 ? 100 : 0;
+            }
+            else {
+                $totalOrderDifference = (($totalOrdersResult[0] - $totalOrdersResult[1]) / $totalOrdersResult[1]) * 100;
+                $data["totalOrderDifference"] = round($totalOrderDifference, 1);
+            }
+        }
+        if($dataField == "drOrders" || $dataField == "all") {
+            $drOrdersResult = Order::getDrOrders($dataDurationStart, $dataDurationEnd);
+            $data["drOrders"] = round($drOrdersResult[0]);
+            if($drOrdersResult[1] == 0) {
+                $data["drOrderDifference"] = $drOrdersResult[0] > 0 ? 100 : 0;
+            }
+            else {
+                $drOrderDifference = (($drOrdersResult[0] - $drOrdersResult[1]) / $drOrdersResult[1]) * 100;
+                $data["drOrderDifference"] = round($drOrderDifference, 1);
+            }
+        }
+        if($dataField == "totalSale" || $dataField == "all") {
+            $totalSaleResult = Order::getTotalSale($dataDurationStart, $dataDurationEnd);
+            $data["totalSale"] = round($totalSaleResult[0]);
+            if($totalSaleResult[1] == 0) {
+                $data["totalSaleDifference"] = $totalSaleResult[0] > 0 ? 100 : 0;
+            }
+            else {
+                $totalSaleDifference = (($totalSaleResult[0] - $totalSaleResult[1]) / $totalSaleResult[1]) * 100;
+                $data["totalSaleDifference"] = round($totalSaleDifference, 1);
+            }
+        }
+        returnResponse(200, "success", "Dashboard data", $data);
     }
 
-    public function store($data) {
-        $orderData = $data["order"];
+    public function store($request) {
+        $orderData = $request["order"];
 
         // Initialize an array to hold total discount allocations for each discount
         $totalDiscountAllocations = [];
@@ -45,7 +89,7 @@ class OrderController {
         $drDiscountTotal = 0;
 
         foreach ($totalDiscountAllocations as $discount) {
-            foreach ($data['discounts'] as $ourDiscount) {
+            foreach ($request['discounts'] as $ourDiscount) {
                 if ($ourDiscount['title'] === $discount['title']) {
                     $drDiscountAmounts[] = [
                         "id" => $ourDiscount['id'],
@@ -63,13 +107,5 @@ class OrderController {
         $orderData["dr_discount_total"] = $drDiscountTotal;
 
         return Order::create($orderData);
-    }
-
-    public function update($id, $data) {
-        return Order::update($id, $data);
-    }
-
-    public function destroy($id) {
-        return Order::delete($id);
     }
 }

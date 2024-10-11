@@ -134,15 +134,54 @@ class Order {
         }
     }
 
+    public static function getTotalOrders($dataDurationStart, $dataDurationEnd) {
+        $lastNdaysSql = "SELECT COUNT(*) AS orders_last_days FROM orders WHERE created_at >= (DATE_SUB(CURDATE(), INTERVAL $dataDurationStart DAY));";
+        $prevNdaysSql = "SELECT COUNT(*) AS orders_previous_days FROM orders WHERE created_at >= (DATE_SUB(CURDATE(), INTERVAL $dataDurationEnd DAY)) AND created_at < (DATE_SUB(CURDATE(), INTERVAL $dataDurationStart DAY));";
+
+        $totalOrderData = self::getOrderAndSaleData($lastNdaysSql, $prevNdaysSql);
+        return [$totalOrderData[0]["orders_last_days"], $totalOrderData[1]["orders_previous_days"]];
+    }
+
+    public static function getDrOrders($dataDurationStart, $dataDurationEnd) {
+        $lastNdaysSql = "SELECT COUNT(*) AS dr_orders_last_days FROM orders WHERE dr_discount_applied = 1 AND created_at >= (DATE_SUB(CURDATE(), INTERVAL $dataDurationStart DAY));";
+        $prevNdaysSql = "SELECT COUNT(*) AS dr_orders_previous_days FROM orders WHERE dr_discount_applied = 1 AND created_at >= (DATE_SUB(CURDATE(), INTERVAL $dataDurationEnd DAY)) AND created_at < (DATE_SUB(CURDATE(), INTERVAL $dataDurationStart DAY));";
+
+        $drOrderData = self::getOrderAndSaleData($lastNdaysSql, $prevNdaysSql);
+        return [$drOrderData[0]["dr_orders_last_days"], $drOrderData[1]["dr_orders_previous_days"]];
+    }
+
+    public static function getTotalSale($dataDurationStart, $dataDurationEnd) {
+        $lastNdaysSql = "SELECT SUM(total_price) AS sale_last_days FROM orders WHERE created_at >= (DATE_SUB(CURDATE(), INTERVAL $dataDurationStart DAY));";
+        $prevNdaysSql = "SELECT SUM(total_price) AS sale_previous_days FROM orders WHERE created_at >= (DATE_SUB(CURDATE(), INTERVAL $dataDurationEnd DAY)) AND created_at < (DATE_SUB(CURDATE(), INTERVAL $dataDurationStart DAY));";
+
+        $totalSaleData = self::getOrderAndSaleData($lastNdaysSql, $prevNdaysSql);
+        return [$totalSaleData[0]["sale_last_days"], $totalSaleData[1]["sale_previous_days"]];
+    }
+
+    private static function getOrderAndSaleData($lastNdaysSql, $prevNdaysSql) {
+        // echo "$lastNdaysSql \r\n$prevNdaysSql";
+        $dbController = new DBController();
+
+        $lastNdaysResult = $dbController->executeQuery($lastNdaysSql);
+        $lastNdaysData = mysqli_fetch_assoc($lastNdaysResult);
+
+        $prevNdaysResult = $dbController->executeQuery($prevNdaysSql);
+        $prevNdaysData = mysqli_fetch_assoc($prevNdaysResult);
+
+        return [$lastNdaysData, $prevNdaysData];
+    }
+
     public static function create($data) {
         $dbController = new DBController();
         $connection = $dbController->getConnection();
 
         $data["order_id"] = $data['id'];
         $data["order_gid"] = $data['admin_graphql_api_id'];
+        $line_items = $data["line_items"];
         $data["customer_gid"] = $data['customer']['admin_graphql_api_id'];
         unset($data['id']);
         unset($data['admin_graphql_api_id']);
+        unset($data['line_items']);
         unset($data['customer']);
 
         $dbController->executeQuery("START TRANSACTION");
@@ -177,6 +216,7 @@ class Order {
                     $field == "original_total_duties_set" ||
                     $field == "payment_gateway_names" ||
                     $field == "subtotal_price_set" ||
+                    $field == "tax_lines" ||
                     $field == "total_discounts_set" ||
                     $field == "total_line_items_price_set" ||
                     $field == "total_price_set" ||
@@ -204,7 +244,7 @@ class Order {
             $last_id = mysqli_insert_id($connection);
 
             if ($last_id) {
-                foreach ($data["line_items"] as $line_item) {
+                foreach ($line_items as $line_item) {
                     $line_item["order_id"] = $last_id;
                     OrderLineItem::create($line_item);
                 }
@@ -217,48 +257,6 @@ class Order {
         } catch (\Exception $e) {
             $dbController->executeQuery("ROLLBACK");
             returnResponse(500, "error", $e->getMessage());
-        }
-    }
-
-    public static function update($id, $data) {
-        returnResponse(500, "error", "Service is off limit");
-        $order = self::getById($id);
-
-        if (!$order) {
-            returnResponse(404, "error", "Order not found");
-        }
-
-        $dbController = new DBController();
-
-        $updates = [];
-        foreach (self::$fields as $field) {
-            if (isset($data[$field])) {
-                $updates[] = "$field = '{$data[$field]}'";
-            }
-        }
-
-        $sql = "UPDATE orders SET " . implode(",", $updates) . " WHERE id = $id";
-        if ($dbController->executeQuery($sql)) {
-            returnResponse(200, "error", "Order updated successfully");
-        } else {
-            returnResponse(500, "error", "Failed to update order");
-        }
-    }
-
-    public static function delete($id) {
-        $order = self::getById($id);
-
-        if (!$order) {
-            returnResponse(404, "error", "Order not found");
-        }
-
-        $dbController = new DBController();
-
-        $sql = "DELETE FROM orders WHERE id = $id";
-        if ($dbController->executeQuery($sql)) {
-            returnResponse(404, "success", "Order deleted successfully");
-        } else {
-            returnResponse(500, "error", "Failed to delete order");
         }
     }
 }

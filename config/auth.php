@@ -1,6 +1,8 @@
 <?php
+require_once "../config/helpers.php";
+
 // Set the allowed IP address
-$allowedIp = '127.0.0.1'; 
+$allowedIp = getEnvValue("SOURCE_SERVER");
 
 if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
     $ipList = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);

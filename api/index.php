@@ -18,6 +18,9 @@ require_once "../config/helpers.php";
 include_once "../app/controllers/OrderController.php";
 include_once "../app/models/Order.php";
 include_once "../app/models/OrderLineItem.php";
+include_once "../app/controllers/CheckoutController.php";
+include_once "../app/models/Checkout.php";
+include_once "../app/models/CheckoutLineItem.php";
 include_once "../app/controllers/CartController.php";
 include_once "../app/models/Cart.php";
 include_once "../app/models/CartLineItem.php";
@@ -32,6 +35,7 @@ $uri = explode('/', $uri);
 
 // Decode the incoming JSON request body
 $request = json_decode(file_get_contents('php://input'), true);
+createLog("INFO", "Request data", $request);
 
 // Check if the URI has a valid resource identifier
 if ($uri[2] && $uri[2] != "") {
@@ -42,14 +46,10 @@ if ($uri[2] && $uri[2] != "") {
 
         // Handle specific actions for orders based on the URI
         if ($uri[3] && $uri[3] != "") {
-            if ($uri[3] == "create") {
+            if ($uri[3] == "dashboard-data") {
+                return $orderController->dashboardData($request);
+            } else if ($uri[3] == "create") {
                 return $orderController->store($request);
-            } else if ($uri[3] == "update" && $uri[4] && $uri[4] != "") {
-                return $orderController->update($uri[4], $request);
-            } else if ($uri[3] == "view" && $uri[4] && $uri[4] != "") {
-                return $orderController->show($uri[4]);
-            } else if ($uri[3] == "delete" && $uri[4] && $uri[4] != "") {
-                return $orderController->destroy($uri[4]);
             } else {
                 // Return 404 if the action is not recognized
                 returnResponse(404, "error", "Not found!");
@@ -57,6 +57,25 @@ if ($uri[2] && $uri[2] != "") {
         } else {
             // Return a list of orders if no specific action is provided
             return $orderController->index();
+        }
+    }
+    // Handle "checkouts" endpoint
+    else if ($uri[2] == "checkouts") {
+        $checkoutController = new CheckoutController();
+
+        // Handle specific actions for checkouts based on the URI
+        if ($uri[3] && $uri[3] != "") {
+            if ($uri[3] == "create" || $uri[3] == "update") {
+                return $checkoutController->createUpdate($request);
+            } else if ($uri[3] == "delete") {
+                return $checkoutController->destroy($request);
+            } else {
+                // Return 404 if the action is not recognized
+                returnResponse(404, "error", "Not found!");
+            }
+        } else {
+            // Return a list of checkouts if no specific action is provided
+            return $checkoutController->index();
         }
     }
     // Handle "carts" endpoint
@@ -69,10 +88,6 @@ if ($uri[2] && $uri[2] != "") {
                 return $cartController->store($request);
             } else if ($uri[3] == "update") {
                 return $cartController->update($request);
-            } else if ($uri[3] == "view" && $uri[4] && $uri[4] != "") {
-                return $cartController->show($uri[4]);
-            } else if ($uri[3] == "delete" && $uri[4] && $uri[4] != "") {
-                return $cartController->destroy($uri[4]);
             } else {
                 // Return 404 if the action is not recognized
                 returnResponse(404, "error", "Not found!");

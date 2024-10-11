@@ -64,9 +64,11 @@ class Cart {
         $connection = $dbController->getConnection();
 
         $data["cart_id"] = $data['id'];
+        $line_items = $data["line_items"];
         $data["created_at"] = date('Y-m-d H:i:s.v', strtotime($data['created_at']));
         $data["updated_at"] = date('Y-m-d H:i:s.v', strtotime($data['updated_at']));
         unset($data['id']);
+        unset($data['line_items']);
 
         $dbController->executeQuery("START TRANSACTION");
         try {
@@ -86,7 +88,7 @@ class Cart {
 
             if ($last_id) {
                 $new_line_items_count = 0;
-                foreach ($data["line_items"] as $line_item) {
+                foreach ($line_items as $line_item) {
                     $line_item["cart_id"] = $last_id;
                     $new_line_items_count += CartLineItem::create($line_item);
                 }
@@ -110,9 +112,11 @@ class Cart {
         $dbController = new DBController();
 
         $data["cart_id"] = $data['id'];
+        $line_items = $data["line_items"];
         $data["created_at"] = date('Y-m-d H:i:s.v', strtotime($data['created_at']));
         $data["updated_at"] = date('Y-m-d H:i:s.v', strtotime($data['updated_at']));
         unset($data['id']);
+        unset($data['line_items']);
 
         $dbController->executeQuery("START TRANSACTION");
         try {
@@ -129,14 +133,14 @@ class Cart {
                 $existing_line_items = CartLineItem::getAll(['id'], $id);
                 $existing_line_item_ids = array_column($existing_line_items, "id");
                 
-                foreach ($data["line_items"] as $line_item) {
+                foreach ($line_items as $line_item) {
                     $line_item["cart_id"] = $id;
-                    $existing_line_item = CartLineItem::getByVariantId($line_item["variant_id"]);
+                    $existing_line_item = CartLineItem::getByLineItemId($id, $line_item["id"]);
                     if($existing_line_item) {
                         $line_item_updated = CartLineItem::update($existing_line_item["id"], $line_item);
                         if($line_item_updated) {
-                            if (($key = array_search($existing_line_item["id"], $existing_line_item_ids)) !== false) {
-                                unset($existing_line_item_ids[$key]);
+                            if (($index = array_search($existing_line_item["id"], $existing_line_item_ids)) !== false) {
+                                unset($existing_line_item_ids[$index]);
                             }
                         }
                     }
@@ -144,7 +148,6 @@ class Cart {
                         CartLineItem::create($line_item);
                     }
                 }
-                // die(json_encode($existing_line_item_ids));
                 foreach ($existing_line_item_ids as $line_item_id) {
                     CartLineItem::delete($line_item_id);
                 }
@@ -157,22 +160,6 @@ class Cart {
         } catch (\Exception $e) {
             $dbController->executeQuery("ROLLBACK");
             returnResponse(500, "error", $e->getMessage());
-        }
-    }
-
-    public static function delete($id) {
-        $cart = self::getById($id);
-        if (!$cart) {
-            returnResponse(404, "error", "Cart not found");
-        }
-
-        $dbController = new DBController();
-
-        $sql = "DELETE FROM carts WHERE id = $id";
-        if ($dbController->executeQuery($sql)) {
-            returnResponse(404, "success", "Cart deleted successfully");
-        } else {
-            returnResponse(500, "error", "Failed to delete cart");
         }
     }
 }

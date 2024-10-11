@@ -2,4 +2,4 @@
 .env
 
 # local log files
-.data.log
+data.log
