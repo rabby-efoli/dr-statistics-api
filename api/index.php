@@ -24,6 +24,9 @@ include_once "../app/models/CheckoutLineItem.php";
 include_once "../app/controllers/CartController.php";
 include_once "../app/models/Cart.php";
 include_once "../app/models/CartLineItem.php";
+include_once "../app/controllers/LogController.php";
+include_once "../app/models/Log.php";
+include_once "../app/models/Discount.php";
 
 if($_SERVER['REQUEST_METHOD'] != "POST") {
     returnResponse(404, "error", "Method not allowed");
@@ -95,6 +98,20 @@ if ($uri[2] && $uri[2] != "") {
         } else {
             // Return a list of carts if no specific action is provided
             return $cartController->index();
+        }
+    }
+    // Handle "carts" endpoint
+    else if ($uri[2] == "logs") {
+        $logController = new LogController();
+
+        // Handle specific actions for logs based on the URI
+        if ($uri[3] == "create-activity") {
+            return $logController->storeActivityLog($request);
+        } else if ($uri[3] == "create-webhook") {
+            return $logController->storeWebhookLog($request);
+        } else {
+            // Return 404 if the action is not recognized
+            returnResponse(404, "error", "Not found!");
         }
     }
     else if ($uri[2] == "init") {

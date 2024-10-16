@@ -64,10 +64,11 @@ class OrderController {
         $totalDiscountAllocations = [];
 
         // Iterate over each discount application
-        foreach ($orderData["discount_applications"] as $index => $discount) {
+        foreach ($orderData["discount_applications"] as $index => $discountApplication) {
             $totalDiscountAllocations[$index] = [
-                "title" => $discount["title"],
-                "total_amount" => 0.0
+                "title" => $discountApplication["title"],
+                "total_amount" => 0.0,
+                "variant_count" => 0,
             ];
 
             // Iterate over each line item
@@ -79,22 +80,24 @@ class OrderController {
                         if ($allocation["discount_application_index"] == $index) {
                             // Sum the amount
                             $totalDiscountAllocations[$index]["total_amount"] += (float)$allocation["amount"];
+                            $totalDiscountAllocations[$index]["variant_count"] += (int)$line_item["quantity"];
                         }
                     }
                 }
             }
         }
 
-        $drDiscountAmounts = [];
+        $drDiscountWithAmounts = [];
         $drDiscountTotal = 0;
 
         foreach ($totalDiscountAllocations as $discount) {
             foreach ($request['discounts'] as $ourDiscount) {
                 if ($ourDiscount['title'] === $discount['title']) {
-                    $drDiscountAmounts[] = [
-                        "id" => $ourDiscount['id'],
+                    $drDiscountWithAmounts[] = [
+                        "discount_id" => $ourDiscount['id'],
                         "title" => $discount['title'],
                         "amount" => $discount['total_amount'],
+                        "variants" => $discount['variant_count'],
                     ]; // Store the amount for our discounts
                     $drDiscountTotal += $discount['total_amount']; // Sum up our discounts
                     break; // Break inner loop if found
@@ -102,9 +105,11 @@ class OrderController {
             }
         }
 
-        $orderData["dr_discount_applied"] = !empty($drDiscountAmounts);
-        $orderData["dr_discount_amounts"] = $drDiscountAmounts;
+        $orderData["dr_discount_applied"] = !empty($drDiscountWithAmounts);
+        $orderData["dr_discount_amounts"] = $drDiscountWithAmounts;
         $orderData["dr_discount_total"] = $drDiscountTotal;
+
+        Discount::save($drDiscountWithAmounts);
 
         return Order::create($orderData);
     }

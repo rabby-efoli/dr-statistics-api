@@ -115,6 +115,7 @@ class Cart {
         $line_items = $data["line_items"];
         $data["created_at"] = date('Y-m-d H:i:s.v', strtotime($data['created_at']));
         $data["updated_at"] = date('Y-m-d H:i:s.v', strtotime($data['updated_at']));
+        $data["modified_at"] = date('Y-m-d H:i:s.v');
         unset($data['id']);
         unset($data['line_items']);
 

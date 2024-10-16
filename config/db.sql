@@ -254,4 +254,15 @@ CREATE TABLE IF NOT EXISTS cart_line_items(
     modified_at TIMESTAMP,
     destroyed_at TIMESTAMP
 );
+CREATE TABLE IF NOT EXISTS discounts(
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    discount_id INT,
+    title VARCHAR(255),
+    order_count INT DEFAULT 0,
+    product_count INT DEFAULT 0,
+    variant_count INT DEFAULT 0,
+    total_discount DECIMAL(10, 2) DEFAULT 0.0,
+    stored_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    modified_at TIMESTAMP
+);
 COMMIT;

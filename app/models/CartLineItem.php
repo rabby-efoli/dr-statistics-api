@@ -147,6 +147,7 @@ class CartLineItem {
                     $updates[] = "$field = '{$value}'";
                 }
             }
+            $updates[] = "destroyed_at = NULL";
 
             $sql = "UPDATE cart_line_items SET " . implode(",", $updates) . " WHERE id = $id";
             if ($dbController->executeQuery($sql)) {
