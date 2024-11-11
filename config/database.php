@@ -1,11 +1,18 @@
 <?php
+require_once "../config/helpers.php";
+
 class DBController {
-    private $host = "localhost";
-    private $user = "root";
-    private $password = "mhr12345";
+    private $host;
+    private $user;
+    private $password;
     private $connection;
 
     function __construct() {
+        // Get values from env file
+        $this->host = getEnvValue("DB_HOST");
+        $this->user = getEnvValue("DB_USERNAME");
+        $this->password = getEnvValue("DB_PASSWORD");
+
         // Create connection to MySQL server
         $this->connection = mysqli_connect($this->host, $this->user, $this->password);
 

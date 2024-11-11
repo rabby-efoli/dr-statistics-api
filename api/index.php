@@ -38,7 +38,6 @@ $uri = explode('/', $uri);
 
 // Decode the incoming JSON request body
 $request = json_decode(file_get_contents('php://input'), true);
-createLog("INFO", "Request data", $request);
 
 // Check if the URI has a valid resource identifier
 if ($uri[2] && $uri[2] != "") {

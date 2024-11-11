@@ -27,34 +27,40 @@ class OrderController {
         $data = [];
         if($dataField == "totalOrders" || $dataField == "all") {
             $totalOrdersResult = Order::getTotalOrders($dataDurationStart, $dataDurationEnd);
-            $data["totalOrders"] = round($totalOrdersResult[0]);
-            if($totalOrdersResult[1] == 0) {
-                $data["totalOrderDifference"] = $totalOrdersResult[0] > 0 ? 100 : 0;
+            $totalOrders = $totalOrdersResult[0] ?? 0;
+            $totalPrevOrders = $totalOrdersResult[1] ?? 0;
+            $data["totalOrders"] = round($totalOrders);
+            if($totalPrevOrders == 0) {
+                $data["totalOrderDifference"] = $totalOrders > 0 ? 100 : 0;
             }
             else {
-                $totalOrderDifference = (($totalOrdersResult[0] - $totalOrdersResult[1]) / $totalOrdersResult[1]) * 100;
+                $totalOrderDifference = (($totalOrders - $totalPrevOrders) / $totalPrevOrders) * 100;
                 $data["totalOrderDifference"] = round($totalOrderDifference, 1);
             }
         }
         if($dataField == "drOrders" || $dataField == "all") {
             $drOrdersResult = Order::getDrOrders($dataDurationStart, $dataDurationEnd);
-            $data["drOrders"] = round($drOrdersResult[0]);
-            if($drOrdersResult[1] == 0) {
-                $data["drOrderDifference"] = $drOrdersResult[0] > 0 ? 100 : 0;
+            $drOrders = $drOrdersResult[0] ?? 0;
+            $drPrevOrders = $drOrdersResult[1] ?? 0;
+            $data["drOrders"] = round($drOrders);
+            if($drPrevOrders == 0) {
+                $data["drOrderDifference"] = $drOrders > 0 ? 100 : 0;
             }
             else {
-                $drOrderDifference = (($drOrdersResult[0] - $drOrdersResult[1]) / $drOrdersResult[1]) * 100;
+                $drOrderDifference = (($drOrders - $drPrevOrders) / $drPrevOrders) * 100;
                 $data["drOrderDifference"] = round($drOrderDifference, 1);
             }
         }
         if($dataField == "totalSale" || $dataField == "all") {
             $totalSaleResult = Order::getTotalSale($dataDurationStart, $dataDurationEnd);
-            $data["totalSale"] = round($totalSaleResult[0]);
-            if($totalSaleResult[1] == 0) {
-                $data["totalSaleDifference"] = $totalSaleResult[0] > 0 ? 100 : 0;
+            $totalSale = $totalSaleResult[0] ?? 0;
+            $totalPrevSale = $totalSaleResult[1] ?? 0;
+            $data["totalSale"] = round($totalSale);
+            if($totalPrevSale == 0) {
+                $data["totalSaleDifference"] = $totalSale > 0 ? 100 : 0;
             }
             else {
-                $totalSaleDifference = (($totalSaleResult[0] - $totalSaleResult[1]) / $totalSaleResult[1]) * 100;
+                $totalSaleDifference = (($totalSale - $totalPrevSale) / $totalPrevSale) * 100;
                 $data["totalSaleDifference"] = round($totalSaleDifference, 1);
             }
         }
