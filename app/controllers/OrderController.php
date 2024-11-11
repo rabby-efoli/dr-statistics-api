@@ -11,7 +11,11 @@ class OrderController {
         $dataField = $params["dataField"];
         $dataDurationStart = 0;
         $dataDurationEnd = 1;
-        if($params["dataDuration"] == "15days") {
+        if($params["dataDuration"] == "7days") {
+            $dataDurationStart = 7;
+            $dataDurationEnd = 14;
+        }
+        else if($params["dataDuration"] == "15days") {
             $dataDurationStart = 15;
             $dataDurationEnd = 30;
         }
