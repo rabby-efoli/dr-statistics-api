@@ -1,19 +1,19 @@
 <?php
 require_once "../config/helpers.php";
 
-// Set the allowed IP address
-$allowedIp = getEnvValue("SOURCE_SERVER");
+$body = file_get_contents('php://input');
+$receivedSignature = $_SERVER['HTTP_X_SIGNATURE'];
+$secret = getEnvValue("API_SECRET");
 
-if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-    $ipList = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
-
-    // The last IP in the list is the client's real IP
-    $clientIp = trim(end($ipList)); 
-} else {
-    $clientIp = $_SERVER['REMOTE_ADDR'];
+$shiftedText = base64_decode($receivedSignature);
+$decryptedText = '';
+for ($i = 0; $i < strlen($shiftedText); $i++) {
+    $shift = ord($secret[$i % strlen($secret)]);
+    $decryptedCharCode = ord($shiftedText[$i]) - $shift;
+    $decryptedText .= chr($decryptedCharCode);
 }
 
-if ($clientIp != $allowedIp) {
+if (!in_array($decryptedText, ["log-data", "stat-data"])) {
     header("HTTP/1.1 403 Forbidden");
     exit(json_encode([
         'message' => "Access denied.",
